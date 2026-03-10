@@ -1,3 +1,8 @@
+"""
+pipeline_resiliente.py — Orquesta scraper → summarizer → guarda JSON en GitHub Releases.
+Versión tolerante a fallos: si una fuente o paso falla, el pipeline sigue.
+"""
+
 import os
 import json
 import logging
