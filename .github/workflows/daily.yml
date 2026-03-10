@@ -1,0 +1,30 @@
+name: Pipeline Noticias Diario
+
+on:
+  schedule:
+    # Corre a las 8:00 AM hora Chile (UTC-3 en verano = 11:00 UTC)
+    - cron: "0 11 * * 1-5"  # lunes a viernes
+  workflow_dispatch:         # permite correrlo manualmente desde GitHub
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Correr pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python pipeline.py
