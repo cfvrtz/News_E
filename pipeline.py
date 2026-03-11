@@ -102,11 +102,12 @@ def subir_a_releases(data: dict, gh_token: str, repo: str):
 def run():
     # Leer variables de entorno
     api_key = os.environ.get("ANTHROPIC_API_KEY")
-    gh_token = os.environ.get("GH_TOKEN")
+    gh_token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY")  # formato: "usuario/repo"
 
     if not gh_token:
-        raise ValueError("Falta GH_TOKEN")
+        raise ValueError("Falta GITHUB_TOKEN o GH_TOKEN")
+    
     if not repo:
         raise ValueError("Falta GITHUB_REPOSITORY")
 
