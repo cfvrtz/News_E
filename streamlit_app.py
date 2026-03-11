@@ -10,10 +10,9 @@ from datetime import datetime
 
 # ── CONFIGURACIÓN ──────────────────────────────────────────────────────────────
 
-# Cambia esto por tu usuario y repo de GitHub
 GITHUB_USER = "cfvrtz"
 GITHUB_REPO = "News_E"
-JSON_URL = f"https://github.com/cfvrtz/News_E/releases/download/untagged-1469946882cff833c476/noticias.json"
+GITHUB_API_RELEASES = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/releases/latest"
 
 CATEGORY_COLORS = {
     "Transmisión":         "#f5c518",
@@ -216,9 +215,20 @@ section[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
 @st.cache_data(ttl=300)  # cachea 5 minutos
 def cargar_noticias():
     try:
-        r = requests.get(JSON_URL, timeout=15)
+        # Usa la API de GitHub para encontrar el asset sin depender del nombre del tag
+        r = requests.get(GITHUB_API_RELEASES, timeout=15)
         r.raise_for_status()
-        return r.json()
+        release = r.json()
+        asset_url = next(
+            (a["browser_download_url"] for a in release.get("assets", [])
+             if a["name"] == "noticias.json"),
+            None
+        )
+        if not asset_url:
+            return {"error": "No se encontró noticias.json en el último release", "noticias": []}
+        r2 = requests.get(asset_url, timeout=15)
+        r2.raise_for_status()
+        return r2.json()
     except Exception as e:
         return {"error": str(e), "noticias": [], "fecha_actualizacion": None}
 
