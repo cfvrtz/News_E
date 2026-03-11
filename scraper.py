@@ -55,8 +55,53 @@ def parse_fecha_es(texto):
 
 # ── FUENTES ────────────────────────────────────────────────────────────────────
 
+def _extraer_fuente_fecha_clipper(tag):
+    """
+    Busca la línea 'Fuente - Día, Fecha' asociada a un titular de Clipper.
+    El formato en el HTML es un elemento con texto 'Estrella de Iquique - Martes, 10 de Marzo de 2026'
+    que puede estar en el sibling inmediato o dentro del contenedor padre.
+    Retorna (fuente, fecha).
+    """
+    candidatos = []
+
+    # 1. Siblings inmediatos del tag (hasta 3)
+    sib = tag.find_next_sibling()
+    for _ in range(3):
+        if sib is None:
+            break
+        candidatos.append(sib.get_text(strip=True))
+        sib = sib.find_next_sibling()
+
+    # 2. Elementos dentro del contenedor padre
+    parent = tag.parent
+    if parent:
+        for el in parent.find_all(["p", "span", "div", "small", "strong", "em"]):
+            t = el.get_text(strip=True)
+            if t and t not in candidatos:
+                candidatos.append(t)
+
+    # 3. Buscar en los candidatos el patrón "Fuente - Día, Fecha"
+    for texto in candidatos:
+        if not texto or len(texto) < 5:
+            continue
+        # Patrón principal: "Fuente - Día, Fecha" o "Fuente - Fecha"
+        if " - " in texto:
+            partes = texto.split(" - ", 1)
+            fuente_cand = partes[0].strip()
+            fecha_cand = parse_fecha_es(partes[1]) if len(partes) > 1 else None
+            # Validar que la fuente no sea el título ni algo demasiado largo
+            if fuente_cand and len(fuente_cand) < 60 and len(fuente_cand) > 2:
+                return fuente_cand, fecha_cand
+        # Patrón alternativo: solo fecha (sin fuente explícita)
+        fecha_sola = parse_fecha_es(texto)
+        if fecha_sola:
+            return None, fecha_sola
+
+    return None, None
+
+
 def scrape_clipper():
-    """CEN Clipper — resumen diario. Titulares con fuente y fecha debajo."""
+    """CEN Clipper — resumen diario. Extrae titular, fuente real y fecha."""
     log.info("Scraping: CEN Clipper")
     url = "https://clipper.e-clip.cl/clipper/clip/cen"
     soup = get_soup(url)
@@ -64,7 +109,6 @@ def scrape_clipper():
         return []
 
     noticias = []
-    # Los titulares vienen como <h3> o <h2> con links
     for tag in soup.find_all(["h2", "h3"]):
         a = tag.find("a")
         if not a:
@@ -74,18 +118,7 @@ def scrape_clipper():
         if not link.startswith("http"):
             link = None
 
-        # La fuente y fecha vienen en el elemento siguiente
-        fuente, fecha = None, None
-        siguiente = tag.find_next_sibling()
-        if siguiente:
-            texto = siguiente.get_text(strip=True)
-            # Formato: "Diario Financiero - Jueves, 5 de Marzo de 2026"
-            if " - " in texto:
-                partes = texto.split(" - ", 1)
-                fuente = partes[0].strip()
-                fecha = parse_fecha_es(partes[1]) if len(partes) > 1 else None
-            else:
-                fecha = parse_fecha_es(texto)
+        fuente, fecha = _extraer_fuente_fecha_clipper(tag)
 
         if titulo and len(titulo) > 15:
             noticias.append({
