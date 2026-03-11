@@ -13,7 +13,7 @@ from datetime import datetime
 # Cambia esto por tu usuario y repo de GitHub
 GITHUB_USER = "cfvrtz"
 GITHUB_REPO = "News_E"
-JSON_URL = f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/releases/download/latest-news/noticias.json"
+JSON_URL = f"https://github.com/cfvrtz/News_E/releases/download/untagged-1469946882cff833c476/noticias.json"
 
 CATEGORY_COLORS = {
     "Transmisión":         "#f5c518",
