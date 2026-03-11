@@ -11,8 +11,8 @@ from datetime import datetime
 # ── CONFIGURACIÓN ──────────────────────────────────────────────────────────────
 
 # Cambia esto por tu usuario y repo de GitHub
-GITHUB_USER = "TU_USUARIO"
-GITHUB_REPO = "energy-news"
+GITHUB_USER = "cfvrtz"
+GITHUB_REPO = "News_E"
 JSON_URL = f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/releases/download/latest-news/noticias.json"
 
 CATEGORY_COLORS = {
