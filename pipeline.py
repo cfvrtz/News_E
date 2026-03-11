@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import requests
+import time
 from datetime import datetime
 import anthropic
 
@@ -63,6 +64,18 @@ def subir_a_releases(data: dict, gh_token: str, repo: str):
     r_tag = _safe_request("DELETE", f"{api}/git/refs/tags/{tag}", headers=headers)
     if r_tag is not None and r_tag.status_code not in (204, 200, 404):
         log.warning(f"No se pudo borrar tag anterior: {r_tag.status_code} {r_tag.text[:200]}")
+
+    # Esperar a que GitHub procese la eliminación antes de crear el nuevo release
+    time.sleep(5)
+
+    # Verificar que el tag realmente ya no existe
+    for intento in range(3):
+        r_check = _safe_request("GET", f"{api}/releases/tags/{tag}", headers=headers)
+        if r_check is None or r_check.status_code == 404:
+            log.info("Tag eliminado correctamente, continuando...")
+            break
+        log.warning(f"Tag aún existe, esperando... (intento {intento+1}/3)")
+        time.sleep(5)
 
     # Crear nuevo release
     payload = {
